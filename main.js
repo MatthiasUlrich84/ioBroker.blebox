@@ -43,6 +43,7 @@ class Blebox extends utils.Adapter {
 		this.getBleboxSettingsState(true);
 		this.getBleboxDeviceState(true);
 		this.getBleboxShutterState(true);
+		this.getBleboxRelayState(true);
 
 
 		const iob = this;
@@ -90,47 +91,130 @@ class Blebox extends utils.Adapter {
 			// The state was changed
 			this.log.info(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
 			switch (id) {
-				case this.namespace + ".command.move":
+				case this.namespace + ".command.shutterbox.move":
 					switch (state.val) {
 						case "d":
 							this.log.info("moving down");
 							response = await this.getSimpleObject("sendDown", null);
-							response["command.move"] = "";
+							response["command.shutterbox.move"] = "";
 							await this.setIobStates(response);
 							this.getBleboxShutterState();
 							break;
 						case "u":
 							this.log.info("moving up");
 							response = await this.getSimpleObject("sendUp", null);
-							response["command.move"] = "";
+							response["command.shutterbox.move"] = "";
 							await this.setIobStates(response);
 							this.getBleboxShutterState();
 							break;
+						case "s":
+							this.log.info("moving stop");
+							response = await this.getSimpleObject("sendStop", null);
+							response["command.shutterbox.move"] = "";
+							await this.setIobStates(response);
+							this.getBleboxShutterState();
+							break;
+
 					}
 					break;
-				case this.namespace + ".command.tilt":
+				case this.namespace + ".command.switchboxD.relays.relay1":
+					switch (state.val) {
+						case "on":
+							this.log.info("relay1 on");
+							response = await this.getSimpleObject("SBDsendRel1On", null);
+							response["command.switchboxD.relays.relay1"] = "";
+							await this.setIobStates(response);
+							this.getBleboxRelayState();
+							break;
+						case "off":
+							this.log.info("relay1 off");
+							response = await this.getSimpleObject("SBDsendRel1Off", null);
+							response["command.switchboxD.relays.relay1"] = "";
+							await this.setIobStates(response);
+							this.getBleboxRelayState();
+							break;
+						case "tog":
+							this.log.info("relay1 toggle");
+							response = await this.getSimpleObject("SBDsendRel1Toggle", null);
+							response["command.switchboxD.relays.relay1"] = "";
+							await this.setIobStates(response);
+							this.getBleboxRelayState();
+							break;
+					}
+					break;
+					case this.namespace + ".command.switchboxD.relays.relay2":
+						switch (state.val) {
+							case "on":
+								this.log.info("relay2 on");
+								response = await this.getSimpleObject("SBDsendRel2On", null);
+								response["command.switchboxD.relays.relay2"] = "";
+								await this.setIobStates(response);
+								this.getBleboxRelayState();
+								break;
+							case "off":
+								this.log.info("relay2 off");
+								response = await this.getSimpleObject("SBDsendRel2Off", null);
+								response["command.switchboxD.relays.relay2"] = "";
+								await this.setIobStates(response);
+								this.getBleboxRelayState();
+								break;
+							case "tog":
+								this.log.info("relay2 toggle");
+								response = await this.getSimpleObject("SBDsendRel2Toggle", null);
+								response["command.switchboxD.relays.relay2"] = "";
+								await this.setIobStates(response);
+								this.getBleboxRelayState();
+								break;
+						}
+						break;
+						case this.namespace + ".command.switchbox.relay":
+						switch (state.val) {
+							case "on":
+								this.log.info("relay on");
+								response = await this.getSimpleObject("SBsendRelOn", null);
+								response["command.switchbox.relay"] = "";
+								await this.setIobStates(response);
+								this.getBleboxRelayState();
+								break;
+							case "off":
+								this.log.info("relay off");
+								response = await this.getSimpleObject("SBsendRelOff", null);
+								response["command.switchbox.relay"] = "";
+								await this.setIobStates(response);
+								this.getBleboxRelayState();
+								break;
+							case "tog":
+								this.log.info("relay toggle");
+								response = await this.getSimpleObject("SBsendRelToggle", null);
+								response["command.switchbox.relay"] = "";
+								await this.setIobStates(response);
+								this.getBleboxRelayState();
+								break;
+						}
+						break;
+				case this.namespace + "command.shutterbox.tilt":
 					if ((state.val != "") && (state.val >= 0) && (state.val <= 100)) {
 						this.log.info(`tilt: ${state.val}`);
 						response = await this.getSimpleObject("tilt", state.val);
-						response["command.tilt"] = "";
+						response["command.shutterbox.tilt"] = "";
 						await this.setIobStates(response);
 						this.getBleboxShutterState();
 					}
 					break;
-				case this.namespace + ".command.favorite":
+				case this.namespace + ".command.shutterbox.favorite":
 					if ((state.val >= 1) && (state.val <= 4)) {
 						this.log.info(`favorite: ${state.val}`);
 						response = await this.getSimpleObject("favorite", state.val);
-						response["command.favorite"] = "";
+						response["command.shutterbox.favorite"] = "";
 						await this.setIobStates(response);
 						this.getBleboxShutterState();
 					}
 					break;
-				case this.namespace + ".command.position":
+				case this.namespace + ".command.shutterbox.position":
 					if ((state.val != "") && (state.val >= 0) && (state.val <= 100)) {
 						this.log.info(`position: ${state.val}`);
 						response = await this.getSimpleObject("position", state.val);
-						response["command.position"] = "";
+						response["command.shutterbox.position"] = "";
 						await this.setIobStates(response);
 						this.getBleboxShutterState();
 					}
@@ -211,7 +295,18 @@ class Blebox extends utils.Adapter {
 		await this.setIobStates(states);
 		return true;
 	}
-
+/**
+	 * get relay state of Blebox
+	 */
+	async getBleboxRelayState(init) {
+		let states = {};
+		states = await this.getSimpleObject("relayState", null);
+		if (init){
+			await this.initIobStates(states);
+		}
+		await this.setIobStates(states);
+		return true;
+	}
 	/**
 	 * 
 	 * @param {string} type apiPart to GET data from
@@ -222,8 +317,19 @@ class Blebox extends utils.Adapter {
 		locationUrl["deviceState"] = "/api/device/state";
 		locationUrl["deviceUptime"] = "/api/device/uptime";
 		locationUrl["settingsState"] = "/api/settings/state";
+		locationUrl["relayState"] = "/api/relay/state";
 		locationUrl["sendUp"] = "/s/u";
 		locationUrl["sendDown"] = "/s/d";
+		locationUrl["sendStop"] = "/s/s";
+		locationUrl["SBDsendRel1On"] = "/s/0/1";
+		locationUrl["SBDsendRel1Off"] = "/s/0/0";
+		locationUrl["SBDsendRel1Toggle"] = "/s/0/2";
+		locationUrl["SBDsendRel2On"] = "/s/1/1";
+		locationUrl["SBDsendRel2Off"] = "/s/1/0";
+		locationUrl["SBDsendRel2Toggle"] = "/s/1/2";
+		locationUrl["SBsendRelOn"] = "/s/1";
+		locationUrl["SBsendRelOff"] = "/s/0";
+		locationUrl["SBsendRelToggle"] = "/s/2";
 		locationUrl["favorite"] = "/s/f/" + val;
 		locationUrl["position"] = "/s/p/" + val;
 		locationUrl["tilt"] = "/s/t/" + val;
@@ -319,14 +425,22 @@ class Blebox extends utils.Adapter {
 
 	async initCommon() {
 		const states = {
-			"command.move": "",
-			"command.favorite": "",
-			"command.position": "",
-			"command.tilt": ""
+			"command.shutterbox.move": "",
+			"command.shutterbox.favorite": "",
+			"command.shutterbox.position": "",
+			"command.shutterbox.tilt": "",
+			"command.switchboxD.relays.relay1": "",
+			"command.switchboxD.relays.relay2": "",
+			"command.switchbox.relay": ""
 		};
 		await this.initIobStates(states);
 	}
+	
+		
+	
+	
 }
+
 
 
 // @ts-ignore parent is a valid property on module
